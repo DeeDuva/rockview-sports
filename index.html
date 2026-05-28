@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rockview University Sports Portal | Home</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/news_default.png">
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <div class="header-container">
+            <a href="index.html" class="logo-section">
+                <i class="fa-solid fa-trophy logo-icon"></i>
+                <span class="logo-text">ROCKSPORT HUB</span>
+            </a>
+            
+            <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle Navigation">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#hero" class="nav-link active">Home</a></li>
+                <li><a href="#news" class="nav-link">Announcements</a></li>
+                <li><a href="#matches" class="nav-link">Upcoming Matches</a></li>
+                <li><a href="#results" class="nav-link">Results</a></li>
+                <li><button onclick="window.location.href='login.html'" class="nav-cta">Admin Login</button></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="hero" style="background-image: url('assets/hero_sports.jpg'); background-size: cover; background-position: center; background-attachment: fixed; min-height: 700px; display: flex; align-items: center; justify-content: center; position: relative;">
+        <div class="hero-overlay"></div>
+        <div class="hero-content" style="text-align: center; z-index: 2; position: relative; padding: 3rem;">
+            <h1 class="hero-title" style="font-size: 4rem; margin-bottom: 1.5rem; text-shadow: 2px 2px 8px rgba(0,0,0,0.5);">WELCOME TO <span>ROCKSPORT</span></h1>
+            <p class="hero-desc" style="font-size: 1.3rem; max-width: 800px; margin: 0 auto; text-shadow: 1px 1px 4px rgba(0,0,0,0.5); line-height: 1.8;">Stay up to date with the latest sports updates, match stats and all match schedules all in one place</p>
+        </div>
+    </section>
+
+    <!-- Sports News & Announcements -->
+    <section id="news">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Sports Announcements</h2>
+                <p class="section-subtitle">Stay up-to-date with trials, tournaments, and sports achievements at Rockview University.</p>
+            </div>
+        </div>
+        <div class="news-grid" id="newsContainer">
+            <!-- Dynamic Content Loaded via JS -->
+            <div class="empty-state">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <p>Loading sports announcements...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upcoming Matches -->
+    <section id="matches">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Upcoming Matches</h2>
+                <p class="section-subtitle">Support our Hawks! Catch the dates, times, and venues of our upcoming matches.</p>
+            </div>
+        </div>
+        <div class="matches-grid" id="matchesContainer">
+            <!-- Dynamic Content Loaded via JS -->
+            <div class="empty-state">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <p>Loading schedules...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Past Match Results -->
+    <section id="results">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Latest Results</h2>
+                <p class="section-subtitle">Review game scores, recap highlights, and celebrate our victories.</p>
+            </div>
+        </div>
+        <div class="results-grid" id="resultsContainer">
+            <!-- Dynamic Content Loaded via JS -->
+            <div class="empty-state">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <p>Loading scores...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- News Article Detail Modal -->
+    <div class="modal-overlay" id="newsModal">
+        <div class="modal-container glass-panel">
+            <button class="modal-close-btn" id="modalCloseBtn" aria-label="Close Modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <img src="" alt="News Image" class="modal-news-img" id="modalNewsImg">
+            <div class="modal-news-content">
+                <h3 class="modal-news-title" id="modalNewsTitle">News Article Title</h3>
+                <div class="modal-news-meta">
+                    <span><i class="fa-regular fa-calendar"></i> <span id="modalNewsDate">Date</span></span>
+                    <span><i class="fa-regular fa-user"></i> <span id="modalNewsAuthor">Author</span></span>
+                    <span><i class="fa-solid fa-tags"></i> <span id="modalNewsCat">Category</span></span>
+                </div>
+                <p class="modal-news-text" id="modalNewsText">Full article content goes here...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-bottom">
+            <p>&copy; 2026 Rockview University Sports Department. All rights reserved</p>
+        </div>
+    </footer>
+
+    <!-- Database and Core scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/notification.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

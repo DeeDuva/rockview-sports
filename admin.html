@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rockview Sports Portal | Admin Dashboard</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/news_default.png">
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Inline authentication route guard to prevent content flashing -->
+    <script src="js/db.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/validators.js"></script>
+    <script src="js/search-utils.js"></script>
+    <script src="js/crypto-utils.js"></script>
+    <script>
+        if (!window.Auth || !window.Auth.isLoggedIn()) {
+            window.location.href = 'login.html';
+        }
+    </script>
+</head>
+<body>
+
+    <!-- Admin Top Header -->
+    <header class="main-header">
+        <div class="header-container">
+            <a href="index.html" class="logo-section">
+                <i class="fa-solid fa-trophy logo-icon"></i>
+                <span class="logo-text">ROCKSPORT HUB</span>
+            </a>
+            
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link"><i class="fa-solid fa-house"></i> View Website</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Admin Layout Container -->
+    <div class="admin-layout">
+        
+        <!-- Sidebar Workspace Navigation -->
+        <aside class="admin-sidebar">
+            <div class="admin-nav">
+                <div class="admin-nav-item active" data-view="matchesView">
+                    <i class="fa-solid fa-calendar-days"></i> UPCOMING MATCHES
+                </div>
+                <div class="admin-nav-item" data-view="resultsView">
+                    <i class="fa-solid fa-chart-simple"></i> MATCH RESULTS
+                </div>
+                <div class="admin-nav-item" data-view="newsView">
+                    <i class="fa-regular fa-newspaper"></i> ANNOUNCEMENTS
+                </div>
+                <div class="admin-nav-item" data-view="adminsView">
+                    <i class="fa-solid fa-user-gear"></i> Admin Accounts
+                </div>
+            </div>
+
+            <!-- Current Logged In Admin Profile -->
+            <div class="admin-profile">
+                <div class="admin-avatar" id="adminAvatar">A</div>
+                <div class="admin-meta">
+                    <div class="admin-name" id="adminDisplayName">Loading...</div>
+                    <div class="admin-role">System Admin</div>
+                </div>
+                <button class="admin-logout" id="adminLogoutBtn" title="Log Out">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Panel Content -->
+        <main class="admin-main">
+            
+            <!-- Dashboard Summary Header Stats -->
+            <div class="admin-stats-grid">
+                <div class="admin-stat-card glass-panel">
+                    <div class="admin-stat-icon blue">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div class="admin-stat-info">
+                        <span class="admin-stat-number" id="statMatchCount">0</span>
+                        <span class="admin-stat-title">Upcoming Matches</span>
+                    </div>
+                </div>
+                <div class="admin-stat-card glass-panel">
+                    <div class="admin-stat-icon orange">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div class="admin-stat-info">
+                        <span class="admin-stat-number" id="statResultCount">0</span>
+                        <span class="admin-stat-title">Game Results</span>
+                    </div>
+                </div>
+                <div class="admin-stat-card glass-panel">
+                    <div class="admin-stat-icon green">
+                        <i class="fa-regular fa-newspaper"></i>
+                    </div>
+                    <div class="admin-stat-info">
+                        <span class="admin-stat-number" id="statNewsCount">0</span>
+                        <span class="admin-stat-title">Announcements</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workspace View 1: Upcoming Matches -->
+            <div class="admin-view active" id="matchesView">
+                <div class="admin-page-header">
+                    <h2 class="admin-page-title">Manage Upcoming Matches</h2>
+                    <button class="btn btn-primary" id="addMatchBtn">
+                        <i class="fa-solid fa-plus"></i> Add New Match
+                    </button>
+                </div>
+                <div class="admin-matches-grid">
+                    <!-- Football Container -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-football"></i> Football</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Match Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="footballMatchesBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Basketball Container -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-basketball"></i> Basketball</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Match Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="basketballMatchesBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Volleyball Container -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-volleyball"></i> Volleyball</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Match Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="volleyballMatchesBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Netball Container -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-circle-nodes"></i> Netball</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Match Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="netballMatchesBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workspace View 2: Match Results -->
+            <div class="admin-view" id="resultsView">
+                <div class="admin-page-header">
+                    <h2 class="admin-page-title">Manage Match Results</h2>
+                    <button class="btn btn-secondary" id="addResultBtn">
+                        <i class="fa-solid fa-plus"></i> Post Game Result
+                    </button>
+                </div>
+                <div class="admin-grid-2x2">
+                    <!-- Football Results -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--secondary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-football"></i> Football Results</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Result Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="footballResultsBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Basketball Results -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--secondary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-basketball"></i> Basketball Results</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Result Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="basketballResultsBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Volleyball Results -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--secondary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-volleyball"></i> Volleyball Results</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Result Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="volleyballResultsBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Netball Results -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--secondary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-circle-nodes"></i> Netball Results</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Result Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="netballResultsBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workspace View 3: News & Announcements -->
+            <div class="admin-view" id="newsView">
+                <div class="admin-page-header">
+                    <h2 class="admin-page-title">Manage Announcements</h2>
+                    <button class="btn btn-primary" id="addNewsBtn">
+                        <i class="fa-solid fa-plus"></i> Publish Announcement
+                    </button>
+                </div>
+                <div class="admin-news-grid">
+                    <!-- Football News -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-football"></i> Football</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Announcement Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="footballNewsBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Basketball News -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-basketball"></i> Basketball</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Announcement Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="basketballNewsBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Volleyball News -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-volleyball"></i> Volleyball</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Announcement Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="volleyballNewsBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Netball News -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-circle-nodes"></i> Netball</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Announcement Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="netballNewsBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tennis News -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-tennis"></i> Tennis</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Announcement Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tennisNewsBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- General News -->
+                    <div class="glass-panel" style="padding: 1.25rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; text-transform: uppercase;"><i class="fa-solid fa-megaphone"></i> General</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Announcement Details</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="generalNewsBody">
+                                    <!-- JS Generated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workspace View 4: Admin Accounts Settings -->
+            <div class="admin-view" id="adminsView">
+                <div class="admin-page-header">
+                    <h2 class="admin-page-title">Administrator Accounts</h2>
+                    <button class="btn btn-outline" id="addAdminBtn">
+                        <i class="fa-solid fa-user-plus"></i> Add Admin
+                    </button>
+                </div>
+                <div class="table-container glass-panel" style="padding: 1rem; max-width: 800px;">
+                    <table class="admin-table" id="adminsTable">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Display Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminsTableBody">
+                            <!-- JS Generated Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL 1: MATCH FORM -->
+    <div class="modal-overlay" id="matchModal">
+        <div class="modal-container admin-modal-container glass-panel">
+            <div class="modal-header">
+                <h3 class="modal-title" id="matchModalTitle">Add Upcoming Match</h3>
+                <button class="modal-close-btn form-modal-close" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="matchForm">
+                <div class="modal-body">
+                    <input type="hidden" id="matchId">
+                    <div class="form-group">
+                        <label for="matchSport" class="form-label">Sport Name</label>
+                        <select id="matchSport" class="form-control" required>
+                            <option value="">-- Select Sport --</option>
+                            <option value="Football">Football</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Volleyball">Volleyball</option>
+                            <option value="Netball">Netball</option>
+                            <option value="Tennis">Tennis</option>
+                            <option value="Athletics">Athletics</option>
+                            <option value="Swimming">Swimming</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="matchCategory" class="form-label">Category</label>
+                        <input type="text" id="matchCategory" class="form-control" placeholder="e.g. Men's Varsity, Women's Finals" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="matchTeamA" class="form-label">Home Team (Rockview)</label>
+                        <input type="text" id="matchTeamA" class="form-control" value="Rockview Hawks" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="matchTeamB" class="form-label">Away / Opponent Team</label>
+                        <input type="text" id="matchTeamB" class="form-control" placeholder="Enter opponent school team" required>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="matchDate" class="form-label">Date</label>
+                            <input type="date" id="matchDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="matchTime" class="form-label">Time</label>
+                            <input type="time" id="matchTime" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="matchVenue" class="form-label">Venue</label>
+                        <input type="text" id="matchVenue" class="form-control" placeholder="e.g. Campus Stadium Pitch 1" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline form-modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Match Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: RESULT FORM -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-container admin-modal-container glass-panel">
+            <div class="modal-header">
+                <h3 class="modal-title" id="resultModalTitle">Post Match Result</h3>
+                <button class="modal-close-btn form-modal-close" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="resultForm">
+                <div class="modal-body">
+                    <input type="hidden" id="resultId">
+                    <div class="form-group">
+                        <label for="resultSport" class="form-label">Sport Name</label>
+                        <select id="resultSport" class="form-control" required>
+                            <option value="">-- Select Sport --</option>
+                            <option value="Football">Football</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Volleyball">Volleyball</option>
+                            <option value="Netball">Netball</option>
+                            <option value="Tennis">Tennis</option>
+                            <option value="Athletics">Athletics</option>
+                            <option value="Swimming">Swimming</option>
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 100px; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="resultTeamA" class="form-label">Team A (Home)</label>
+                            <input type="text" id="resultTeamA" class="form-control" value="Rockview Hawks" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resultScoreA" class="form-label">Score A</label>
+                            <input type="number" id="resultScoreA" class="form-control" min="0" required>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 100px; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="resultTeamB" class="form-label">Team B (Away)</label>
+                            <input type="text" id="resultTeamB" class="form-control" placeholder="Opponent team" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resultScoreB" class="form-label">Score B</label>
+                            <input type="number" id="resultScoreB" class="form-control" min="0" required>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="resultDate" class="form-label">Match Date</label>
+                            <input type="date" id="resultDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resultVenue" class="form-label">Venue</label>
+                            <input type="text" id="resultVenue" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="resultNotes" class="form-label">Match Summary / Recap Notes</label>
+                        <textarea id="resultNotes" class="form-control" placeholder="Highlight goals, top players, special moves, etc."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline form-modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-secondary">Post Score Result</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2A: TODAY'S MATCHES FOR RESULT POST -->
+    <div class="modal-overlay" id="todayMatchesModal">
+        <div class="modal-container admin-modal-container glass-panel" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Today's In-Progress Matches</h3>
+                <button class="modal-close-btn form-modal-close" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="today-matches-intro" style="margin-bottom: 1rem; color: var(--text-muted);">
+                    Select a match scheduled for today to add the result.
+                </div>
+                <div class="today-matches-grid" id="todayMatchesList"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline form-modal-cancel">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: NEWS FORM -->
+    <div class="modal-overlay" id="newsModal">
+        <div class="modal-container admin-modal-container glass-panel" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="newsModalTitle">Publish Announcement</h3>
+                <button class="modal-close-btn form-modal-close" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="newsForm">
+                <div class="modal-body">
+                    <input type="hidden" id="newsId">
+                    <div class="form-group">
+                        <label for="newsTitle" class="form-label">Headline Title</label>
+                        <input type="text" id="newsTitle" class="form-control" placeholder="Enter headline text" required>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="newsCategory" class="form-label">Category</label>
+                            <input type="text" id="newsCategory" class="form-control" placeholder="e.g. Football, General, Athletics" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newsAuthor" class="form-label">Author Name</label>
+                            <input type="text" id="newsAuthor" class="form-control" placeholder="e.g. Coach Smith, Sports Dept" required>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="newsDate" class="form-label">Publish Date</label>
+                            <input type="date" id="newsDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newsImageSelect" class="form-label">Featured Image</label>
+                            <select id="newsImageSelect" class="form-control">
+                                <option value="assets/news_default.png">Default Sports Lines (Abstract)</option>
+                                <option value="assets/hero_soccer.png">Soccer Field (Dynamic)</option>
+                                <option value="assets/sports_trials.png">Freshman Trials collage</option>
+                                <option value="assets/tennis_player.png">Tennis match player</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="newsSummary" class="form-label">Brief Summary</label>
+                        <input type="text" id="newsSummary" class="form-control" placeholder="Provide a short sentence hook" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newsContent" class="form-label">Announcement Content (Full Article)</label>
+                        <textarea id="newsContent" class="form-control" style="min-height: 150px;" placeholder="Write full details..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline form-modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Publish Announcement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: ADMIN FORM -->
+    <div class="modal-overlay" id="adminModal">
+        <div class="modal-container admin-modal-container glass-panel">
+            <div class="modal-header">
+                <h3 class="modal-title">Register Administrator Account</h3>
+                <button class="modal-close-btn form-modal-close" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="adminForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="newAdminUsername" class="form-label">Username</label>
+                        <input type="text" id="newAdminUsername" class="form-control" placeholder="Enter username (lowercase, no spaces)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newAdminName" class="form-label">Display Name / Title</label>
+                        <input type="text" id="newAdminName" class="form-control" placeholder="e.g. Coach Mwanza" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newAdminPassword" class="form-label">Account Password</label>
+                        <input type="password" id="newAdminPassword" class="form-control" placeholder="Enter password" required>
+                    </div>
+                    <div class="form-error" id="newAdminError"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline form-modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JS Scripts -->
+    <script src="js/notification.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

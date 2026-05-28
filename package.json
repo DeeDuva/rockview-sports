@@ -1,0 +1,19 @@
+{
+  "name": "rockview-sports",
+  "version": "1.0.0",
+  "description": "The application now runs **purely on the client side** using `localStorage` for data persistence. No backend server or SQLite database is required.",
+  "main": "diagnostic.js",
+  "scripts": {
+    "start": "npx serve -l 3000 -s .",
+    "serve": "npx serve -l 3000 -s .",
+    "build": "echo \"No build step required for this static deployment.\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "serve": "^14.2.6"
+  }
+}

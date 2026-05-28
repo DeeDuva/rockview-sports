@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rockview Sports Portal | Admin Login</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/news_default.png">
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="login-body">
+
+    <div class="login-card glass-panel">
+        <div class="login-header">
+            <div class="logo-section">
+                <i class="fa-solid fa-trophy logo-icon"></i>
+                <span class="logo-text">ROCKSPORT HUB</span>
+            </div>
+            <h1 class="login-title">Administrator Access</h1>
+            <p class="login-subtitle">Sign in to manage match schedules, scores, and news.</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter admin username" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+            </div>
+
+            <div class="form-error" id="loginError">Invalid credentials. Please try again.</div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                Sign In <i class="fa-solid fa-right-to-bracket"></i>
+            </button>
+        </form>
+
+        <div class="login-footer-info">
+            <p>Protected administrative area.</p>
+            <a href="index.html" class="login-back-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to Public Portal
+            </a>
+        </div>
+    </div>
+
+    <!-- Core Database and Auth scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Secure page: Redirect to admin dashboard if already logged in
+            if (window.Auth && typeof window.Auth.redirectIfAuthenticated === 'function') {
+                window.Auth.redirectIfAuthenticated();
+            }
+
+            const loginForm = document.getElementById('loginForm');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const loginError = document.getElementById('loginError');
+
+            let countdownInterval = null;
+            function startLockoutCountdown(remainingSec) {
+                const submitBtn = loginForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                usernameInput.disabled = true;
+                passwordInput.disabled = true;
+
+                function updateCountdown() {
+                    if (remainingSec <= 0) {
+                        clearInterval(countdownInterval);
+                        submitBtn.disabled = false;
+                        usernameInput.disabled = false;
+                        passwordInput.disabled = false;
+                        submitBtn.innerHTML = 'Sign In <i class="fa-solid fa-right-to-bracket"></i>';
+                        loginError.style.display = 'none';
+                        localStorage.removeItem('rvs_login_failures');
+                        localStorage.removeItem('rvs_lockout_until');
+                    } else {
+                        submitBtn.innerText = `Locked (${remainingSec}s)`;
+                        loginError.innerText = `Too many failed attempts. Try again in ${remainingSec} seconds.`;
+                        loginError.style.display = 'block';
+                        remainingSec--;
+                    }
+                }
+                
+                updateCountdown();
+                countdownInterval = setInterval(updateCountdown, 1000);
+            }
+
+            // Check existing lockout on page load
+            const lockoutUntil = parseInt(localStorage.getItem('rvs_lockout_until') || '0');
+            if (lockoutUntil && Date.now() < lockoutUntil) {
+                const remainingSec = Math.ceil((lockoutUntil - Date.now()) / 1000);
+                startLockoutCountdown(remainingSec);
+            }
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                loginError.style.display = 'none';
+                
+                // Pre-submit check for lockout
+                const curLockout = parseInt(localStorage.getItem('rvs_lockout_until') || '0');
+                if (curLockout && Date.now() < curLockout) {
+                    const remainingSec = Math.ceil((curLockout - Date.now()) / 1000);
+                    startLockoutCountdown(remainingSec);
+                    return;
+                }
+
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value;
+
+                if (!username || !password) {
+                    loginError.innerText = 'Please fill out all fields.';
+                    loginError.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    // Simulates authentication check
+                    await window.Auth.login(username, password);
+                    localStorage.removeItem('rvs_login_failures');
+                    localStorage.removeItem('rvs_lockout_until');
+                    window.location.href = 'admin.html';
+                } catch (err) {
+                    passwordInput.value = '';
+                    passwordInput.focus();
+
+                    const lockoutInfo = window.Auth.getLockoutInfo();
+                    if (lockoutInfo.locked) {
+                        startLockoutCountdown(lockoutInfo.remaining);
+                    }
+
+                    loginError.innerText = err.message || 'Login failed.';
+                    loginError.style.display = 'block';
+                }
+            });
+
+            // Automatic verification of default admin credentials on page load.
+            // If credentials are invalid (corrupted localStorage), restore defaults.
+            (async function autoVerifyDefaultAdmin(){
+                try {
+                    const ok = await window.Auth.verifyCredentials('admin', 'Admin@123');
+                    if (ok) {
+                        console.log('Auth self-test: default admin credentials valid.');
+                        return;
+                    }
+                    console.warn('Auth self-test: default admin invalid — resetting default admin account.');
+                    localStorage.setItem('admins', JSON.stringify([{ username: 'admin', password: 'Admin@123', name: 'Administrator' }]));
+                    localStorage.removeItem('rvs_login_failures');
+                    localStorage.removeItem('rvs_lockout_until');
+                    console.log('Default admin restored. You can now sign in with admin / Admin@123');
+                } catch (e) {
+                    console.error('Auth self-test error:', e);
+                }
+            })();
+        });
+    </script>
+</body>
+</html>
