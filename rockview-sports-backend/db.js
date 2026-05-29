@@ -7,10 +7,17 @@ let dbPromise = null;
 
 async function getDB() {
     if (!dbPromise) {
-        dbPromise = open({
-            filename: path.join(__dirname, 'sports.db'),
-            driver: sqlite3.Database
-        });
+        try {
+            const dbPath = path.join(__dirname, 'sports.db');
+            console.log(`Opening database at: ${dbPath}`);
+            dbPromise = open({
+                filename: dbPath,
+                driver: sqlite3.Database
+            });
+        } catch (err) {
+            console.error('Error opening database:', err);
+            throw err;
+        }
     }
     return dbPromise;
 }
