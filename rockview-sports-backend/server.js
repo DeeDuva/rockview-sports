@@ -1,13 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const path = require('path');
 const bcrypt = require('bcryptjs');
 const { getDB, initDatabase } = require('./db');
 
 const app = express();
-// Serve frontend files (public portal and admin portal)
-app.use(express.static(path.join(__dirname, '..')));
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = 'rvs_jwt_secret_key_12345';
 
