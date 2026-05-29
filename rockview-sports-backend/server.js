@@ -250,6 +250,11 @@ app.delete('/api/admins/:username', authenticateToken, async (req, res) => {
     }
 });
 
+// --- HEALTH CHECK ---
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok' });
+});
+
 // --- SERVER INITIALIZATION ---
 async function startServer() {
     try {
@@ -260,6 +265,7 @@ async function startServer() {
         });
     } catch (err) {
         console.error('Failed to initialize database and start server:', err);
+        process.exit(1);
     }
 }
 
