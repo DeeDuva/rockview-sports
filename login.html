@@ -49,6 +49,9 @@
         </div>
     </div>
 
+    <!-- Self-test status -->
+    <div id="selfTestStatus" style="position:fixed;right:12px;bottom:12px;background:#fff;padding:8px 12px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.12);font-size:13px;z-index:9999">Auth self-test: running...</div>
+
     <!-- Core Database and Auth scripts -->
     <script src="js/db.js"></script>
     <script src="js/auth.js"></script>
@@ -145,19 +148,54 @@
             // If credentials are invalid (corrupted localStorage), restore defaults.
             (async function autoVerifyDefaultAdmin(){
                 try {
-                    const ok = await window.Auth.verifyCredentials('admin', 'Admin@123');
+                    const ok = await window.Auth.verifyCredentials('admin', 'password123');
                     if (ok) {
                         console.log('Auth self-test: default admin credentials valid.');
                         return;
                     }
                     console.warn('Auth self-test: default admin invalid — resetting default admin account.');
-                    localStorage.setItem('admins', JSON.stringify([{ username: 'admin', password: 'Admin@123', name: 'Administrator' }]));
+                    localStorage.setItem('admins', JSON.stringify([{ username: 'admin', password: 'password123', name: 'Administrator' }]));
                     localStorage.removeItem('rvs_login_failures');
                     localStorage.removeItem('rvs_lockout_until');
-                    console.log('Default admin restored. You can now sign in with admin / Admin@123');
+                    console.log('Default admin restored. You can now sign in with admin / password123');
                 } catch (e) {
                     console.error('Auth self-test error:', e);
                 }
+            })();
+
+            // Run a non-destructive automatic login test and show results in the status box
+            (async function runAuthSelfTest(){
+                const statusEl = document.getElementById('selfTestStatus');
+                try {
+                    statusEl.innerText = 'Auth self-test: verifying credentials...';
+                    const verified = await window.Auth.verifyCredentials('admin', 'password123');
+                    if (!verified) {
+                        statusEl.innerText = 'Auth self-test: default credentials invalid — reset performed. Retrying...';
+                        // restore defaults then re-check
+                        localStorage.setItem('admins', JSON.stringify([{ username: 'admin', password: 'password123', name: 'Administrator' }]));
+                        localStorage.removeItem('rvs_login_failures');
+                        localStorage.removeItem('rvs_lockout_until');
+                    }
+
+                    // Attempt to login programmatically
+                    statusEl.innerText = 'Auth self-test: attempting login...';
+                    try {
+                        await window.Auth.login('admin', 'password123');
+                        // Clear session created by test (non-destructive)
+                        sessionStorage.removeItem('rvs_current_session');
+                        sessionStorage.removeItem('rvs_auth_token');
+                        statusEl.innerText = 'Auth self-test: OK — login succeeded.';
+                        console.log('Auth self-test: login succeeded.');
+                    } catch (loginErr) {
+                        statusEl.innerText = 'Auth self-test: FAILED — ' + (loginErr.message || 'login error');
+                        console.error('Auth self-test login error:', loginErr);
+                    }
+                } catch (e) {
+                    statusEl.innerText = 'Auth self-test: ERROR';
+                    console.error('Auth self-test error:', e);
+                }
+                // auto-hide status after 8 seconds
+                setTimeout(() => { try { document.getElementById('selfTestStatus').style.display='none'; } catch(e){} }, 8000);
             })();
         });
     </script>

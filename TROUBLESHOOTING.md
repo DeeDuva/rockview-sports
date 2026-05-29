@@ -59,7 +59,7 @@ Having problems with your Vercel deployment? Use this guide to solve common issu
 **Solutions**:
 1. Check you're using the correct credentials:
    - Username: `admin`
-   - Password: `Admin@123`
+   - Password: `password123`
 2. Clear browser cookies:
    - Press `Ctrl + Shift + Delete`
    - Select "Clear all"

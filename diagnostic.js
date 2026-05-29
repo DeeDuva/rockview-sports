@@ -26,6 +26,6 @@ setTimeout(() => {
   console.log('--- Diagnostic Check Completed ---');
   console.log('Please verify:');
   console.log('- Public site loads and displays data from localStorage');
-  console.log('- Admin login works with username: admin and password: Admin@123');
+  console.log('- Admin login works with username: admin and password: password123');
   console.log('- Accessing admin.html without login redirects to login screen');
 }, 6000);

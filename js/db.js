@@ -17,8 +17,8 @@ function setArray(key, arr) {
 // Initialize default data if not present (admin account only, matches, results, news empty)
 (function initData() {
   if (!localStorage.getItem('admins')) {
-    // default admin credentials (username: admin, password: Admin@123)
-    const defaultAdmins = [{ username: 'admin', password: 'Admin@123', name: 'Administrator' }];
+    // default admin credentials (username: admin, password: password123)
+    const defaultAdmins = [{ username: 'admin', password: 'password123', name: 'Administrator' }];
     setArray('admins', defaultAdmins);
   }
   if (!localStorage.getItem('matches')) setArray('matches', []);

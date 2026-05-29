@@ -105,7 +105,7 @@ You'll get a URL like: `https://rockview-sports.vercel.app`
 ### Test Your Site:
 - **Public Portal**: `https://rockview-sports.vercel.app/index.html`
 - **Admin Portal**: `https://rockview-sports.vercel.app/admin.html`
-- **Admin Login**: Use `admin` / `Admin@123`
+- **Admin Login**: Use `admin` / `password123`
 
 ---
 
@@ -128,7 +128,7 @@ If you want a custom domain (like `rockview-sports.com`):
 
 1. **Never share your GitHub token** - Only you should have access
 2. **Change default credentials** - After deployment:
-   - Log in with `admin` / `Admin@123`
+   - Log in with `admin` / `password123`
    - Change the password immediately
 3. **Use HTTPS** - Vercel provides free SSL certificates (automatically enabled)
 
@@ -170,7 +170,7 @@ Whenever you make changes:
 
 ### Login doesn't work
 - Clear browser cookies: `Ctrl + Shift + Delete`
-- Use correct credentials: `admin` / `Admin@123`
+- Use correct credentials: `admin` / `password123`
 - Try a different browser
 
 ### Data disappears after refresh

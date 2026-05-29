@@ -18,7 +18,7 @@ The application now runs **purely on the client side** using `localStorage` for 
    - You can browse matches, results, and news. All data is stored in your browser's `localStorage`.
 3. **Open the admin portal** (protected):
    - URL: `http://localhost:3000/admin.html`
-   - **Default credentials**: `admin` / `Admin@123`
+   - **Default credentials**: `admin` / `password123`
    - After logging in you can manage matches, results, and news.
 
 ## Diagnostic Checks

@@ -51,7 +51,7 @@ Use this checklist to track your deployment progress. Check off each item as you
 
 ### Admin Portal
 - [ ] I can open the admin page: `https://YOUR_SITE.vercel.app/admin.html`
-- [ ] I can log in with `admin` / `Admin@123`
+- [ ] I can log in with `admin` / `password123`
 - [ ] I can see the dashboard with statistics
 - [ ] I can add a new match
 - [ ] I can add a new result
@@ -81,7 +81,7 @@ If something isn't working, check these:
 
 - [ ] Is my GitHub repository set to **Public**?
 - [ ] Have I waited at least 3-5 minutes after pushing changes?
-- [ ] Did I use the correct default credentials: `admin` / `Admin@123`?
+- [ ] Did I use the correct default credentials: `admin` / `password123`?
 - [ ] Have I cleared my browser cache and cookies?
 - [ ] Did I check the Vercel deployment logs for errors?
 - [ ] Is my internet connection working properly?
