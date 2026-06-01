@@ -67,10 +67,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let allNews = [];
     let currentSportFilter = 'all';
     let searchQuery = '';
+    let newsLimit = window.innerWidth < 768 ? 3 : 6;
+    let matchesLimit = window.innerWidth < 768 ? 3 : 6;
+    let resultsLimit = window.innerWidth < 768 ? 3 : 6;
 
     // Fetch and render data
     async function loadDashboardData() {
         try {
+            // Reset limits on full reload based on current screen size
+            newsLimit = window.innerWidth < 768 ? 3 : 6;
+            matchesLimit = window.innerWidth < 768 ? 3 : 6;
+            resultsLimit = window.innerWidth < 768 ? 3 : 6;
+
             // Get data concurrently
             const [matches, results, news] = await Promise.all([
                 window.DB.getMatches(),
@@ -141,19 +149,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render News & Announcements
     function renderNews(newsItems) {
+        const viewMoreContainer = document.getElementById('newsViewMoreContainer');
         if (!newsItems || newsItems.length === 0) {
             newsContainer.innerHTML = `
                 <div class="empty-state">
                     <i class="fa-regular fa-newspaper"></i>
                     <p>No announcements published yet.</p>
                 </div>`;
+            if (viewMoreContainer) viewMoreContainer.style.display = 'none';
             return;
         }
 
         // Sort news by date descending
         const sortedNews = [...newsItems].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        newsContainer.innerHTML = sortedNews.map(item => {
+        // Show/hide View More button
+        if (viewMoreContainer) {
+            if (sortedNews.length > newsLimit) {
+                viewMoreContainer.style.display = 'flex';
+            } else {
+                viewMoreContainer.style.display = 'none';
+            }
+        }
+
+        const slicedNews = sortedNews.slice(0, newsLimit);
+
+        newsContainer.innerHTML = slicedNews.map(item => {
             const formattedDate = formatDate(item.date);
             return `
                 <div class="news-card glass-panel" style="padding: 1.5rem;">
@@ -185,19 +206,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render Upcoming Matches
     function renderMatches(matches) {
+        const viewMoreContainer = document.getElementById('matchesViewMoreContainer');
         if (!matches || matches.length === 0) {
             matchesContainer.innerHTML = `
                 <div class="empty-state">
                     <i class="fa-regular fa-calendar-times"></i>
                     <p>No upcoming matches scheduled.</p>
                 </div>`;
+            if (viewMoreContainer) viewMoreContainer.style.display = 'none';
             return;
         }
 
         // Sort by date ascending (soonest first)
         const sortedMatches = [...matches].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        matchesContainer.innerHTML = sortedMatches.map(match => {
+        // Show/hide View More button
+        if (viewMoreContainer) {
+            if (sortedMatches.length > matchesLimit) {
+                viewMoreContainer.style.display = 'flex';
+            } else {
+                viewMoreContainer.style.display = 'none';
+            }
+        }
+
+        const slicedMatches = sortedMatches.slice(0, matchesLimit);
+
+        matchesContainer.innerHTML = slicedMatches.map(match => {
             const formattedDate = formatDate(match.date);
             
             // Transform category text
@@ -241,19 +275,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render Match Results
     function renderResults(results) {
+        const viewMoreContainer = document.getElementById('resultsViewMoreContainer');
         if (!results || results.length === 0) {
             resultsContainer.innerHTML = `
                 <div class="empty-state">
                     <i class="fa-solid fa-clipboard-question"></i>
                     <p>No match results posted yet.</p>
                 </div>`;
+            if (viewMoreContainer) viewMoreContainer.style.display = 'none';
             return;
         }
 
         // Sort results by date descending (latest first)
         const sortedResults = [...results].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        resultsContainer.innerHTML = sortedResults.map(res => {
+        // Show/hide View More button
+        if (viewMoreContainer) {
+            if (sortedResults.length > resultsLimit) {
+                viewMoreContainer.style.display = 'flex';
+            } else {
+                viewMoreContainer.style.display = 'none';
+            }
+        }
+
+        const slicedResults = sortedResults.slice(0, resultsLimit);
+
+        resultsContainer.innerHTML = slicedResults.map(res => {
             const formattedDate = formatDate(res.date);
             const scoreA = parseInt(res.scoreA);
             const scoreB = parseInt(res.scoreB);
@@ -375,7 +422,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // View More Button Listeners
+    const btnNewsViewMore = document.getElementById('btnNewsViewMore');
+    if (btnNewsViewMore) {
+        btnNewsViewMore.addEventListener('click', () => {
+            newsLimit += window.innerWidth < 768 ? 3 : 6;
+            applyFilters();
+        });
+    }
+
+    const btnMatchesViewMore = document.getElementById('btnMatchesViewMore');
+    if (btnMatchesViewMore) {
+        btnMatchesViewMore.addEventListener('click', () => {
+            matchesLimit += window.innerWidth < 768 ? 3 : 6;
+            applyFilters();
+        });
+    }
+
+    const btnResultsViewMore = document.getElementById('btnResultsViewMore');
+    if (btnResultsViewMore) {
+        btnResultsViewMore.addEventListener('click', () => {
+            resultsLimit += window.innerWidth < 768 ? 3 : 6;
+            applyFilters();
+        });
+    }
+
     // Run loader
     loadDashboardData();
     window.AppReload = loadDashboardData;
+    // Update limits on window resize for responsive view more behavior
+    window.addEventListener('resize', () => {
+        newsLimit = matchesLimit = resultsLimit = window.innerWidth < 768 ? 3 : 6;
+        applyFilters();
+    });
 });
