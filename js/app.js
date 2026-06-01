@@ -62,6 +62,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    let allMatches = [];
+    let allResults = [];
+    let allNews = [];
+    let currentSportFilter = 'all';
+
     // Fetch and render data
     async function loadDashboardData() {
         try {
@@ -72,9 +77,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.DB.getNews()
             ]);
 
-            renderNews(news);
-            renderMatches(matches);
-            renderResults(results);
+            allMatches = matches;
+            allResults = results;
+            allNews = news;
+
+            applyFilters();
         } catch (error) {
             console.error('Failed to load data from database:', error);
             const errMsg = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Unable to load contents. Please try again later.</p></div>`;
@@ -82,6 +89,25 @@ document.addEventListener('DOMContentLoaded', () => {
             matchesContainer.innerHTML = errMsg;
             resultsContainer.innerHTML = errMsg;
         }
+    }
+
+    // Apply active sport filter
+    function applyFilters() {
+        const filter = currentSportFilter.toLowerCase();
+        
+        let filteredNews = allNews;
+        let filteredMatches = allMatches;
+        let filteredResults = allResults;
+        
+        if (filter !== 'all') {
+            filteredNews = allNews.filter(n => (n.category || '').toLowerCase() === filter);
+            filteredMatches = allMatches.filter(m => (m.sport || '').toLowerCase() === filter);
+            filteredResults = allResults.filter(r => (r.sport || '').toLowerCase() === filter);
+        }
+        
+        renderNews(filteredNews);
+        renderMatches(filteredMatches);
+        renderResults(filteredResults);
     }
 
     // Render News & Announcements
@@ -297,6 +323,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
             }
+        });
+    });
+
+    // Filter Bar Logic
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentSportFilter = btn.getAttribute('data-sport');
+            applyFilters();
         });
     });
 

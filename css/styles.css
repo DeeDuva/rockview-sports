@@ -334,6 +334,62 @@ section {
     max-width: 600px;
 }
 
+/* Sports Filter Bar */
+.sports-filter-container {
+    max-width: var(--max-width);
+    margin: 2rem auto 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    z-index: 10;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 40px;
+    background: rgba(17, 24, 39, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-light);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    overflow-x: auto;
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+.filter-bar::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome, Safari, Opera */
+}
+
+.filter-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.6rem 1.5rem;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+}
+
+.filter-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.filter-btn.active {
+    color: var(--text-dark);
+    background: linear-gradient(135deg, var(--primary) 0%, #00b4d8 100%);
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
 /* Hero Section */
 .hero-section {
     position: relative;
