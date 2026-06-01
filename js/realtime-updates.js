@@ -5,7 +5,7 @@
  */
 
 const RealtimeUpdates = {
-    apiUrl: `http://localhost:3001`,
+    apiUrl: `https://rockview-sports.onrender.com`,
     pollInterval: 3000, // 3 seconds
     isPolling: false,
     // Track already seen IDs for fallback (if needed)

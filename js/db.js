@@ -1,6 +1,6 @@
 // db.js - API data layer (connects to backend at localhost:3001)
 
-const BACKEND_URL = 'http://localhost:3001';
+const BACKEND_URL = 'https://rockview-sports.onrender.com';
 
 // Helper: get stored JWT token (set on login)
 function getToken() {
