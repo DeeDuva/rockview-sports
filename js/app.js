@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allResults = [];
     let allNews = [];
     let currentSportFilter = 'all';
+    let searchQuery = '';
 
     // Fetch and render data
     async function loadDashboardData() {
@@ -91,18 +92,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Apply active sport filter
+    // Apply active sport filter and search query
     function applyFilters() {
         const filter = currentSportFilter.toLowerCase();
+        const q = searchQuery.trim().toLowerCase();
         
         let filteredNews = allNews;
         let filteredMatches = allMatches;
         let filteredResults = allResults;
         
+        // 1. Apply Sport Filter
         if (filter !== 'all') {
             filteredNews = allNews.filter(n => (n.category || '').toLowerCase() === filter);
             filteredMatches = allMatches.filter(m => (m.sport || '').toLowerCase() === filter);
             filteredResults = allResults.filter(r => (r.sport || '').toLowerCase() === filter);
+        }
+        
+        // 2. Apply Search Query
+        if (q !== '') {
+            filteredNews = filteredNews.filter(n => 
+                (n.title || '').toLowerCase().includes(q) || 
+                (n.summary || '').toLowerCase().includes(q) || 
+                (n.content || '').toLowerCase().includes(q) ||
+                (n.category || '').toLowerCase().includes(q)
+            );
+            
+            filteredMatches = filteredMatches.filter(m => 
+                (m.teamA || '').toLowerCase().includes(q) || 
+                (m.teamB || '').toLowerCase().includes(q) || 
+                (m.venue || '').toLowerCase().includes(q) || 
+                (m.sport || '').toLowerCase().includes(q) ||
+                (m.category || '').toLowerCase().includes(q)
+            );
+            
+            filteredResults = filteredResults.filter(r => 
+                (r.teamA || '').toLowerCase().includes(q) || 
+                (r.teamB || '').toLowerCase().includes(q) || 
+                (r.venue || '').toLowerCase().includes(q) || 
+                (r.sport || '').toLowerCase().includes(q) ||
+                (r.notes || '').toLowerCase().includes(q)
+            );
         }
         
         renderNews(filteredNews);
@@ -336,6 +365,15 @@ document.addEventListener('DOMContentLoaded', () => {
             applyFilters();
         });
     });
+
+    // Search Bar Logic
+    const searchInput = document.getElementById('sportsSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            applyFilters();
+        });
+    }
 
     // Run loader
     loadDashboardData();

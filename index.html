@@ -44,14 +44,20 @@
         </div>
     </section>
 
-    <!-- Sports Filter Bar -->
+    <!-- Sports Filter Bar & Search -->
     <div class="sports-filter-container">
-        <div class="filter-bar">
-            <button class="filter-btn active" data-sport="all">All Sports</button>
-            <button class="filter-btn" data-sport="football">Football</button>
-            <button class="filter-btn" data-sport="basketball">Basketball</button>
-            <button class="filter-btn" data-sport="volleyball">Volleyball</button>
-            <button class="filter-btn" data-sport="netball">Netball</button>
+        <div class="filter-wrapper" style="display: flex; flex-direction: column; align-items: center; gap: 1.25rem; width: 100%;">
+            <div class="filter-bar">
+                <button class="filter-btn active" data-sport="all">All Sports</button>
+                <button class="filter-btn" data-sport="football">Football</button>
+                <button class="filter-btn" data-sport="basketball">Basketball</button>
+                <button class="filter-btn" data-sport="volleyball">Volleyball</button>
+                <button class="filter-btn" data-sport="netball">Netball</button>
+            </div>
+            <div class="search-bar-container">
+                <input type="text" id="sportsSearchInput" placeholder="Search announcements, matches, results..." class="search-input">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            </div>
         </div>
     </div>
 
