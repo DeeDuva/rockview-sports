@@ -1780,4 +1780,49 @@ textarea.form-control {
     .notification-toast.show {
         transform: translateX(0) translateY(0);
     }
+    /* Adjust filter bar for mobile */
+    .sports-filter-container {
+        flex-direction: column;
+        align-items: center;
+        padding: 0 1rem;
+    }
+    .filter-bar {
+        justify-content: center;
+        padding: 0.25rem;
+    }
+    .filter-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+    }
+    /* Reduce font sizes and spacing for sections */
+    .section-title {
+        font-size: 1.75rem;
+    }
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    .hero-section {
+        padding: 8rem 1rem 5rem 1rem;
+    }
+    .hero-desc {
+        font-size: 1rem;
+    }
+    .news-card {
+        padding: 0.75rem;
+    }
+    .match-card, .result-card {
+        padding: 0.75rem;
+    }
+    .admin-sidebar {
+        width: 100%;
+        position: static;
+    }
+    .admin-main {
+        margin-left: 0;
+        padding: 1rem;
+    }
+    .admin-layout {
+        flex-direction: column;
+    }
+    }
 }
