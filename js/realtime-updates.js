@@ -5,12 +5,15 @@
  */
 
 const RealtimeUpdates = {
-    apiUrl: 'https://rockview-sports.onrender.com',
+    apiUrl: `http://localhost:3001`,
     pollInterval: 3000, // 3 seconds
     isPolling: false,
+    // Track already seen IDs for fallback (if needed)
     lastNewsIds: new Set(),
     lastMatchIds: new Set(),
     lastResultIds: new Set(),
+    // Timestamp of last successful poll
+    lastTimestamp: 0,
 
     /**
      * Initialize the polling system
@@ -22,7 +25,7 @@ const RealtimeUpdates = {
     },
 
     /**
-     * Load previously seen IDs from localStorage
+     * Load cached state (IDs + timestamp) from localStorage
      */
     loadCachedIds() {
         try {
@@ -32,6 +35,7 @@ const RealtimeUpdates = {
                 this.lastNewsIds = new Set(data.news || []);
                 this.lastMatchIds = new Set(data.matches || []);
                 this.lastResultIds = new Set(data.results || []);
+                this.lastTimestamp = data.since || 0;
             }
         } catch (err) {
             console.error('Error loading cache:', err);
@@ -39,14 +43,15 @@ const RealtimeUpdates = {
     },
 
     /**
-     * Save current IDs to localStorage
+     * Save cached state (IDs + timestamp) to localStorage
      */
     saveCachedIds() {
         try {
             localStorage.setItem('rvs_update_cache', JSON.stringify({
                 news: Array.from(this.lastNewsIds),
                 matches: Array.from(this.lastMatchIds),
-                results: Array.from(this.lastResultIds)
+                results: Array.from(this.lastResultIds),
+                since: this.lastTimestamp
             }));
         } catch (err) {
             console.error('Error saving cache:', err);
@@ -86,19 +91,25 @@ const RealtimeUpdates = {
     },
 
     /**
-     * Check all endpoints for new data
+     * Fetch updates since last timestamp using a single endpoint
      */
     async checkForUpdates() {
         try {
-            const [news, matches, results] = await Promise.all([
-                this.fetchData(`${this.apiUrl}/api/news`),
-                this.fetchData(`${this.apiUrl}/api/matches`),
-                this.fetchData(`${this.apiUrl}/api/results`)
-            ]);
+            const data = await this.fetchData(`${this.apiUrl}/api/updates?since=${this.lastTimestamp}`);
 
-            this.checkNewsUpdates(news);
-            this.checkMatchUpdates(matches);
-            this.checkResultUpdates(results);
+            // Process each type if present
+            if (data.news) this.checkNewsUpdates(data.news);
+            if (data.matches) this.checkMatchUpdates(data.matches);
+            if (data.results) this.checkResultUpdates(data.results);
+
+            // Update timestamp to the latest `updated_at` among fetched items
+            let maxTs = this.lastTimestamp;
+            const allItems = [...(data.news || []), ...(data.matches || []), ...(data.results || [])];
+            allItems.forEach(item => {
+                if (item.updated_at && item.updated_at > maxTs) maxTs = item.updated_at;
+            });
+            this.lastTimestamp = maxTs;
+            this.saveCachedIds();
 
         } catch (err) {
             console.debug('Failed to check updates:', err.message);
@@ -119,17 +130,19 @@ const RealtimeUpdates = {
      */
     checkNewsUpdates(newsItems) {
         if (!Array.isArray(newsItems)) return;
-
+        let hasNew = false;
         newsItems.forEach(news => {
             if (!this.lastNewsIds.has(news.id)) {
                 this.lastNewsIds.add(news.id);
+                hasNew = true;
                 NotificationSystem.show(
-                    `📰 New: ${news.title}`,
+                    `📰 New Announcement: ${news.title}`,
                     'info',
-                    5000
+                    6000
                 );
             }
         });
+        if (hasNew && window.AppReload) window.AppReload();
         this.saveCachedIds();
     },
 
@@ -138,10 +151,11 @@ const RealtimeUpdates = {
      */
     checkMatchUpdates(matches) {
         if (!Array.isArray(matches)) return;
-
+        let hasNew = false;
         matches.forEach(match => {
             if (!this.lastMatchIds.has(match.id)) {
                 this.lastMatchIds.add(match.id);
+                hasNew = true;
                 NotificationSystem.show(
                     `🏆 New Match: ${match.teamA} vs ${match.teamB}`,
                     'info',
@@ -149,6 +163,7 @@ const RealtimeUpdates = {
                 );
             }
         });
+        if (hasNew && window.AppReload) window.AppReload();
         this.saveCachedIds();
     },
 
@@ -157,10 +172,11 @@ const RealtimeUpdates = {
      */
     checkResultUpdates(results) {
         if (!Array.isArray(results)) return;
-
+        let hasNew = false;
         results.forEach(result => {
             if (!this.lastResultIds.has(result.id)) {
                 this.lastResultIds.add(result.id);
+                hasNew = true;
                 NotificationSystem.show(
                     `⚡ Result: ${result.teamA} ${result.scoreA}-${result.scoreB} ${result.teamB}`,
                     'success',
@@ -168,6 +184,7 @@ const RealtimeUpdates = {
                 );
             }
         });
+        if (hasNew && window.AppReload) window.AppReload();
         this.saveCachedIds();
     }
 };

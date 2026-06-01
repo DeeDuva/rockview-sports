@@ -74,15 +74,15 @@ app.post('/api/matches', authenticateToken, async (req, res) => {
         if (matchData.id) {
             // Update
             await db.run(
-                `UPDATE matches SET sport = ?, teamA = ?, teamB = ?, date = ?, time = ?, venue = ?, category = ? WHERE id = ?`,
-                [matchData.sport, matchData.teamA, matchData.teamB, matchData.date, matchData.time, matchData.venue, matchData.category, matchData.id]
+                `UPDATE matches SET sport = ?, teamA = ?, teamB = ?, date = ?, time = ?, venue = ?, category = ?, updated_at = ? WHERE id = ?`,
+                [matchData.sport, matchData.teamA, matchData.teamB, matchData.date, matchData.time, matchData.venue, matchData.category, Date.now(), matchData.id]
             );
         } else {
             // Create
             matchData.id = 'm_' + Date.now();
             await db.run(
-                `INSERT INTO matches (id, sport, teamA, teamB, date, time, venue, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [matchData.id, matchData.sport, matchData.teamA, matchData.teamB, matchData.date, matchData.time, matchData.venue, matchData.category]
+                `INSERT INTO matches (id, sport, teamA, teamB, date, time, venue, category, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [matchData.id, matchData.sport, matchData.teamA, matchData.teamB, matchData.date, matchData.time, matchData.venue, matchData.category, Date.now()]
             );
         }
         res.json(matchData);
@@ -120,15 +120,15 @@ app.post('/api/results', authenticateToken, async (req, res) => {
         if (resultData.id) {
             // Update
             await db.run(
-                `UPDATE results SET sport = ?, teamA = ?, teamB = ?, scoreA = ?, scoreB = ?, date = ?, venue = ?, notes = ? WHERE id = ?`,
-                [resultData.sport, resultData.teamA, resultData.teamB, resultData.scoreA, resultData.scoreB, resultData.date, resultData.venue, resultData.notes, resultData.id]
+                `UPDATE results SET sport = ?, teamA = ?, teamB = ?, scoreA = ?, scoreB = ?, date = ?, venue = ?, notes = ?, updated_at = ? WHERE id = ?`,
+                [resultData.sport, resultData.teamA, resultData.teamB, resultData.scoreA, resultData.scoreB, resultData.date, resultData.venue, resultData.notes, Date.now(), resultData.id]
             );
         } else {
             // Create
             resultData.id = 'r_' + Date.now();
             await db.run(
-                `INSERT INTO results (id, sport, teamA, teamB, scoreA, scoreB, date, venue, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [resultData.id, resultData.sport, resultData.teamA, resultData.teamB, resultData.scoreA, resultData.scoreB, resultData.date, resultData.venue, resultData.notes]
+                `INSERT INTO results (id, sport, teamA, teamB, scoreA, scoreB, date, venue, notes, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [resultData.id, resultData.sport, resultData.teamA, resultData.teamB, resultData.scoreA, resultData.scoreB, resultData.date, resultData.venue, resultData.notes, Date.now()]
             );
         }
         res.json(resultData);
@@ -166,8 +166,8 @@ app.post('/api/news', authenticateToken, async (req, res) => {
         if (newsData.id) {
             // Update
             await db.run(
-                `UPDATE news SET title = ?, summary = ?, content = ?, date = ?, category = ?, author = ?, imageUrl = ? WHERE id = ?`,
-                [newsData.title, newsData.summary, newsData.content, newsData.date, newsData.category, newsData.author, newsData.imageUrl, newsData.id]
+                `UPDATE news SET title = ?, summary = ?, content = ?, date = ?, category = ?, author = ?, imageUrl = ?, updated_at = ? WHERE id = ?`,
+                [newsData.title, newsData.summary, newsData.content, newsData.date, newsData.category, newsData.author, newsData.imageUrl, Date.now(), newsData.id]
             );
         } else {
             // Create
@@ -176,8 +176,8 @@ app.post('/api/news', authenticateToken, async (req, res) => {
                 newsData.imageUrl = 'assets/news_default.png';
             }
             await db.run(
-                `INSERT INTO news (id, title, summary, content, date, category, author, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [newsData.id, newsData.title, newsData.summary, newsData.content, newsData.date, newsData.category, newsData.author, newsData.imageUrl]
+                `INSERT INTO news (id, title, summary, content, date, category, author, imageUrl, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [newsData.id, newsData.title, newsData.summary, newsData.content, newsData.date, newsData.category, newsData.author, newsData.imageUrl, Date.now()]
             );
         }
         res.json(newsData);
@@ -250,6 +250,115 @@ app.delete('/api/admins/:username', authenticateToken, async (req, res) => {
 // --- HEALTH CHECK ---
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
+});
+
+// --- TIMESTAMP-BASED UPDATES ENDPOINT ---
+app.get('/api/updates', async (req, res) => {
+    const since = parseInt(req.query.since) || 0;
+    try {
+        const db = await getDB();
+        const [matches, results, news] = await Promise.all([
+            db.all('SELECT * FROM matches WHERE updated_at > ?', [since]),
+            db.all('SELECT * FROM results WHERE updated_at > ?', [since]),
+            db.all('SELECT * FROM news WHERE updated_at > ?', [since])
+        ]);
+        res.json({ matches, results, news });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- POLLS API ---
+// Get all polls
+app.get('/api/polls', async (req, res) => {
+    try {
+        const db = await getDB();
+        const polls = await db.all('SELECT * FROM polls');
+        res.json(polls);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// Create a poll (protected)
+app.post('/api/polls', authenticateToken, async (req, res) => {
+    const poll = req.body;
+    try {
+        const db = await getDB();
+        poll.id = 'p_' + Date.now();
+        poll.created_at = Date.now();
+        await db.run(`INSERT INTO polls (id, question, created_at) VALUES (?, ?, ?)`, [poll.id, poll.question, poll.created_at]);
+        res.json(poll);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// Delete a poll (protected)
+app.delete('/api/polls/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const db = await getDB();
+        await db.run('DELETE FROM polls WHERE id = ?', [id]);
+        await db.run('DELETE FROM votes WHERE poll_id = ?', [id]); // cascade cleanup
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// Vote on a poll (protected)
+app.post('/api/polls/:id/vote', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const { choice } = req.body;
+    const userId = req.user.username; // using username as identifier
+    try {
+        const db = await getDB();
+        const voteId = 'v_' + Date.now();
+        await db.run(`INSERT INTO votes (id, poll_id, user_id, choice, created_at) VALUES (?, ?, ?, ?, ?)`, [voteId, id, userId, choice, Date.now()]);
+        res.json({ success: true });
+    } catch (err) {
+        if (err && err.code === 'SQLITE_CONSTRAINT') {
+            res.status(400).json({ error: 'You have already voted on this poll.' });
+        } else {
+            res.status(500).json({ error: err.message });
+        }
+    }
+});
+
+// --- PROCESSES API ---
+// List processes
+app.get('/api/processes', async (req, res) => {
+    try {
+        const db = await getDB();
+        const processes = await db.all('SELECT * FROM processes');
+        res.json(processes);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// Create a process (protected)
+app.post('/api/processes', authenticateToken, async (req, res) => {
+    const proc = req.body;
+    try {
+        const db = await getDB();
+        proc.id = 'proc_' + Date.now();
+        proc.status = proc.status || 'running';
+        proc.started_at = Date.now();
+        await db.run(`INSERT INTO processes (id, name, status, started_at) VALUES (?, ?, ?, ?)`, [proc.id, proc.name, proc.status, proc.started_at]);
+        res.json(proc);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// Update process status (protected)
+app.patch('/api/processes/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    try {
+        const db = await getDB();
+        await db.run('UPDATE processes SET status = ?, completed_at = ? WHERE id = ?', [status, status === 'completed' ? Date.now() : null, id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // --- SERVER INITIALIZATION ---

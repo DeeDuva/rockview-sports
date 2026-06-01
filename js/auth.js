@@ -15,44 +15,26 @@ const Auth = {
       throw new Error(`Account locked. Try again in ${secondsLeft} seconds.`);
     }
 
-    const admins = await DB.getAdmins();
-    const admin = admins.find(a => a.username.toLowerCase() === username.toLowerCase());
-    
-    if (!admin) {
+    try {
+      const data = await DB.login(username, password);
+      // Backend returns: { token, user: { username, name } }
+      // We set the legacy session info that auth.js and admin.js expect:
+      sessionStorage.setItem('rvs_auth_token', data.token);
+      const session = {
+        username: data.user.username,
+        name: data.user.name,
+        loginTime: Date.now()
+      };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+
+      // Clear login failures on successful login
+      localStorage.removeItem('rvs_login_failures');
+      localStorage.removeItem('rvs_lockout_until');
+      return session;
+    } catch (err) {
       this._incrementLoginFailures();
-      throw new Error('Invalid username or password.');
+      throw err;
     }
-
-    // Password verification (supports both hashed and plain-text)
-    let passwordValid = false;
-    if (admin.password.includes('$')) {
-      // Hash format detected (if using hashing in future)
-      // For now, compare as plain text
-      passwordValid = admin.password === password;
-    } else {
-      // Plain text comparison
-      passwordValid = admin.password === password;
-    }
-
-    if (!passwordValid) {
-      this._incrementLoginFailures();
-      throw new Error('Invalid username or password.');
-    }
-
-    // Clear login failures on successful login
-    localStorage.removeItem('rvs_login_failures');
-    localStorage.removeItem('rvs_lockout_until');
-
-    // Generate a simple token (base64 of username)
-    const token = btoa(username);
-    sessionStorage.setItem('rvs_auth_token', token);
-    const session = {
-      username: admin.username,
-      name: admin.name,
-      loginTime: Date.now()
-    };
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    return session;
   },
 
   // Handle login failures for rate limiting
@@ -104,15 +86,16 @@ const Auth = {
 
   // Verify credentials without creating a session (returns true/false)
   async verifyCredentials(username, password) {
-    const admins = await DB.getAdmins();
-    const admin = admins.find(a => a.username.toLowerCase() === (username || '').toLowerCase());
-    if (!admin) return false;
-    // Support plain-text comparison (and simple future hashed format)
-    if (typeof admin.password !== 'string') return false;
-    if (admin.password.includes('$')) {
-      return admin.password === password;
+    try {
+      const response = await fetch(`${window.BACKEND_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      return response.ok;
+    } catch (e) {
+      return false;
     }
-    return admin.password === password;
   },
 
   logout() {

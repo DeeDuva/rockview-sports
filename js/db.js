@@ -1,152 +1,107 @@
-// db.js - LocalStorage data layer (replaces server API calls)
+// db.js - API data layer (connects to backend at localhost:3001)
 
-// Helper to safely parse JSON from localStorage
-function getArray(key) {
-  try {
-    return JSON.parse(localStorage.getItem(key) || '[]');
-  } catch (e) {
-    console.error('Corrupted data for', key, e);
-    return [];
-  }
+const BACKEND_URL = 'http://localhost:3001';
+
+// Helper: get stored JWT token (set on login)
+function getToken() {
+    return sessionStorage.getItem('rvs_token') || localStorage.getItem('rvs_token') || null;
 }
 
-function setArray(key, arr) {
-  localStorage.setItem(key, JSON.stringify(arr));
+// Helper: build auth headers
+function authHeaders() {
+    const token = getToken();
+    return token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
 }
 
-// Initialize default data if not present (admin account only, matches, results, news empty)
-(function initData() {
-  if (!localStorage.getItem('admins')) {
-    // default admin credentials (username: admin, password: password123)
-    const defaultAdmins = [{ username: 'admin', password: 'password123', name: 'Administrator' }];
-    setArray('admins', defaultAdmins);
-  }
-  if (!localStorage.getItem('matches')) setArray('matches', []);
-  if (!localStorage.getItem('results')) setArray('results', []);
-  if (!localStorage.getItem('news')) setArray('news', []);
-})();
+// Helper: fetch wrapper with error handling
+async function apiFetch(path, options = {}) {
+    const res = await fetch(`${BACKEND_URL}${path}`, {
+        ...options,
+        headers: { ...authHeaders(), ...(options.headers || {}) }
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+}
 
 const DB = {
-  // --- MATCHES CRUD ---
-  async getMatches() {
-    const data = localStorage.getItem('matches');
-    return data ? JSON.parse(data) : [];
-  },
-  async saveMatch(matchData) {
-    const matches = await this.getMatches();
-    if (!matchData.id) matchData.id = 'm_' + Date.now();
-    const idx = matches.findIndex(m => m.id === matchData.id);
-    if (idx >= 0) matches[idx] = matchData; else matches.push(matchData);
-    localStorage.setItem('matches', JSON.stringify(matches));
-    return matchData;
-  },
-  async deleteMatch(id) {
-    let matches = await this.getMatches();
-    matches = matches.filter(m => m.id !== id);
-    localStorage.setItem('matches', JSON.stringify(matches));
-    return true;
-  },
+    // --- MATCHES ---
+    async getMatches() {
+        return apiFetch('/api/matches');
+    },
+    async saveMatch(matchData) {
+        return apiFetch('/api/matches', {
+            method: 'POST',
+            body: JSON.stringify(matchData)
+        });
+    },
+    async deleteMatch(id) {
+        return apiFetch(`/api/matches/${id}`, { method: 'DELETE' });
+    },
 
-  // --- RESULTS CRUD ---
-  async getResults() {
-    return getArray('results');
-  },
-  async saveResult(resultData) {
-    const results = getArray('results');
-    if (resultData.id) {
-      const idx = results.findIndex(r => r.id === resultData.id);
-      if (idx !== -1) results[idx] = resultData;
-      else results.push(resultData);
-    } else {
-      resultData.id = 'r_' + Date.now();
-      results.push(resultData);
-    }
-    setArray('results', results);
-    return resultData;
-  },
-  async deleteResult(id) {
-    const results = getArray('results').filter(r => r.id !== id);
-    setArray('results', results);
-    return true;
-  },
+    // --- RESULTS ---
+    async getResults() {
+        return apiFetch('/api/results');
+    },
+    async saveResult(resultData) {
+        return apiFetch('/api/results', {
+            method: 'POST',
+            body: JSON.stringify(resultData)
+        });
+    },
+    async deleteResult(id) {
+        return apiFetch(`/api/results/${id}`, { method: 'DELETE' });
+    },
 
-  // --- NEWS CRUD ---
-  async getNews() {
-    return getArray('news');
-  },
-  async saveNews(newsData) {
-    const news = getArray('news');
-    if (newsData.id) {
-      const idx = news.findIndex(n => n.id === newsData.id);
-      if (idx !== -1) news[idx] = newsData;
-      else news.push(newsData);
-    } else {
-      newsData.id = 'n_' + Date.now();
-      news.push(newsData);
-    }
-    setArray('news', news);
-    return newsData;
-  },
-  async deleteNews(id) {
-    const news = getArray('news').filter(n => n.id !== id);
-    setArray('news', news);
-    return true;
-  },
+    // --- NEWS ---
+    async getNews() {
+        return apiFetch('/api/news');
+    },
+    async saveNews(newsData) {
+        return apiFetch('/api/news', {
+            method: 'POST',
+            body: JSON.stringify(newsData)
+        });
+    },
+    async deleteNews(id) {
+        return apiFetch(`/api/news/${id}`, { method: 'DELETE' });
+    },
 
-  // --- ADMIN CRUD (protected) ---
-  async getAdmins() {
-    // Returns full admin objects (with password) for auth system
-    return getArray('admins');
-  },
-  
-  async getAdminsForDisplay() {
-    // Returns admin objects without passwords for UI display
-    const admins = getArray('admins');
-    return admins.map(a => ({ username: a.username, name: a.name }));
-  },
+    // --- ADMINS ---
+    async getAdmins() {
+        return apiFetch('/api/admins');
+    },
+    async addAdmin(adminData) {
+        return apiFetch('/api/admins', {
+            method: 'POST',
+            body: JSON.stringify(adminData)
+        });
+    },
+    async deleteAdmin(username) {
+        return apiFetch(`/api/admins/${username}`, { method: 'DELETE' });
+    },
 
-  async addAdmin(adminData) {
-    const admins = getArray('admins');
-    if (admins.some(a => a.username.toLowerCase() === adminData.username.toLowerCase())) {
-      throw new Error('Admin username already exists.');
+    // --- AUTH ---
+    async login(username, password) {
+        const data = await apiFetch('/api/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ username, password })
+        });
+        // Store token for subsequent requests
+        if (data.token) {
+            sessionStorage.setItem('rvs_token', data.token);
+            localStorage.setItem('rvs_token', data.token);
+        }
+        return data;
+    },
+    logout() {
+        sessionStorage.removeItem('rvs_token');
+        localStorage.removeItem('rvs_token');
     }
-    // Store password (in production, use hashing on server)
-    admins.push({
-      username: adminData.username,
-      password: adminData.password,
-      name: adminData.name
-    });
-    setArray('admins', admins);
-    return { username: adminData.username, name: adminData.name };
-  },
-
-  async updateAdmin(username, updates) {
-    const admins = getArray('admins');
-    const idx = admins.findIndex(a => a.username.toLowerCase() === username.toLowerCase());
-    if (idx === -1) {
-      throw new Error('Admin not found.');
-    }
-    // Update allowed fields
-    if (updates.name) admins[idx].name = updates.name;
-    if (updates.password) admins[idx].password = updates.password;
-    setArray('admins', admins);
-    return { username: admins[idx].username, name: admins[idx].name };
-  },
-
-  async deleteAdmin(username) {
-    const admins = getArray('admins');
-    if (admins.length === 1) {
-      throw new Error('Cannot delete the last admin account.');
-    }
-    const filtered = admins.filter(a => a.username.toLowerCase() !== username.toLowerCase());
-    if (filtered.length === admins.length) {
-      throw new Error('Admin not found.');
-    }
-    setArray('admins', filtered);
-    return true;
-  }
 };
 
-// Expose globally for the rest of the app
+// Expose globally
 window.DB = DB;
-window.BACKEND_URL = null; // no remote backend
+window.BACKEND_URL = BACKEND_URL;

@@ -302,4 +302,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Run loader
     loadDashboardData();
+    window.AppReload = loadDashboardData;
 });

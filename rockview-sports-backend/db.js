@@ -158,7 +158,8 @@ async function initDatabase() {
         CREATE TABLE IF NOT EXISTS admins (
             username TEXT PRIMARY KEY,
             password TEXT,
-            name TEXT
+            name TEXT,
+            updated_at INTEGER
         )
     `);
 
@@ -172,7 +173,8 @@ async function initDatabase() {
             date TEXT,
             time TEXT,
             venue TEXT,
-            category TEXT
+            category TEXT,
+            updated_at INTEGER
         )
     `);
 
@@ -187,7 +189,8 @@ async function initDatabase() {
             scoreB INTEGER,
             date TEXT,
             venue TEXT,
-            notes TEXT
+            notes TEXT,
+            updated_at INTEGER
         )
     `);
 
@@ -201,7 +204,8 @@ async function initDatabase() {
             date TEXT,
             category TEXT,
             author TEXT,
-            imageUrl TEXT
+            imageUrl TEXT,
+            updated_at INTEGER
         )
     `);
 
@@ -211,8 +215,8 @@ async function initDatabase() {
         for (const admin of DEFAULT_ADMINS) {
             const hashedPassword = bcrypt.hashSync(admin.password, 10);
             await db.run(
-                'INSERT INTO admins (username, password, name) VALUES (?, ?, ?)',
-                [admin.username, hashedPassword, admin.name]
+                'INSERT INTO admins (username, password, name, updated_at) VALUES (?, ?, ?, ?)',
+                [admin.username, hashedPassword, admin.name, Date.now()]
             );
         }
         console.log('Seeded default admins.');
@@ -223,8 +227,8 @@ async function initDatabase() {
     if (matchCount.count === 0) {
         for (const m of DEFAULT_MATCHES) {
             await db.run(
-                'INSERT INTO matches (id, sport, teamA, teamB, date, time, venue, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [m.id, m.sport, m.teamA, m.teamB, m.date, m.time, m.venue, m.category]
+                'INSERT INTO matches (id, sport, teamA, teamB, date, time, venue, category, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [m.id, m.sport, m.teamA, m.teamB, m.date, m.time, m.venue, m.category, Date.now()]
             );
         }
         console.log('Seeded default matches.');
@@ -235,8 +239,8 @@ async function initDatabase() {
     if (resultCount.count === 0) {
         for (const r of DEFAULT_RESULTS) {
             await db.run(
-                'INSERT INTO results (id, sport, teamA, teamB, scoreA, scoreB, date, venue, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [r.id, r.sport, r.teamA, r.teamB, r.scoreA, r.scoreB, r.date, r.venue, r.notes]
+                'INSERT INTO results (id, sport, teamA, teamB, scoreA, scoreB, date, venue, notes, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [r.id, r.sport, r.teamA, r.teamB, r.scoreA, r.scoreB, r.date, r.venue, r.notes, Date.now()]
             );
         }
         console.log('Seeded default results.');
@@ -247,13 +251,62 @@ async function initDatabase() {
     if (newsCount.count === 0) {
         for (const n of DEFAULT_NEWS) {
             await db.run(
-                'INSERT INTO news (id, title, summary, content, date, category, author, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [n.id, n.title, n.summary, n.content, n.date, n.category, n.author, n.imageUrl]
+                'INSERT INTO news (id, title, summary, content, date, category, author, imageUrl, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [n.id, n.title, n.summary, n.content, n.date, n.category, n.author, n.imageUrl, Date.now()]
             );
         }
         console.log('Seeded default news.');
     }
+    // Create Polls table
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS polls (
+            id TEXT PRIMARY KEY,
+            question TEXT,
+            created_at INTEGER
+        )
+    `);
+
+    // Create Votes table with unique constraint to prevent duplicate votes per user per poll
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS votes (
+            id TEXT PRIMARY KEY,
+            poll_id TEXT,
+            user_id TEXT,
+            choice TEXT,
+            created_at INTEGER,
+            UNIQUE(poll_id, user_id)
+        )
+    `);
+
+    // Create Processes table to track background tasks
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS processes (
+            id TEXT PRIMARY KEY,
+            name TEXT,
+            status TEXT,
+            started_at INTEGER,
+            completed_at INTEGER
+        )
+    `);
+
+    // Cleanup function to handle unfinished duplicate processes
+    async function cleanUpProcesses() {
+        const unfinished = await db.all('SELECT * FROM processes WHERE status != ?', ['completed']);
+        console.log(`Found ${unfinished.length} unfinished processes.`);
+        const seen = new Set();
+        for (const proc of unfinished) {
+            const key = proc.name;
+            if (seen.has(key)) {
+                await db.run('UPDATE processes SET status = ? WHERE id = ?', ['ignored', proc.id]);
+            } else {
+                seen.add(key);
+            }
+        }
+    }
+    // Run cleanup after initializing tables
+    await cleanUpProcesses();
 }
+
 
 module.exports = {
     getDB,
